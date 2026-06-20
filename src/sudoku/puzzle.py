@@ -13,7 +13,7 @@ type Coord = tuple[int, int]
 EMPTY: str = "."
 NUMBERS: str = "123456789"
 ALLOWED: str = NUMBERS + EMPTY
-ALL_NUMS: set[str] = {num for num in NUMBERS}
+ALL_NUMS: frozenset[str] = frozenset({num for num in NUMBERS})
 
 
 @enum.unique
@@ -108,14 +108,12 @@ class Grid:
 
     def _unit_rows(self) -> list[Unit]:
         return [
-            Unit(rc, Orientation.ROW, [self.squares[rc, cc] for cc in range(9)])
-            for rc in range(9)
+            Unit(rc, Orientation.ROW, [self.squares[rc, cc] for cc in range(9)]) for rc in range(9)
         ]
 
     def _unit_cols(self) -> list[Unit]:
         return [
-            Unit(cc, Orientation.COL, [self.squares[rc, cc] for rc in range(9)])
-            for cc in range(9)
+            Unit(cc, Orientation.COL, [self.squares[rc, cc] for rc in range(9)]) for cc in range(9)
         ]
 
     def _unit_boxes(self) -> list[Unit]:
@@ -156,7 +154,7 @@ class Grid:
         lines.append(SEP)
         return "\n".join(lines)
 
-    def _lines(self) -> list[str]:
+    def lines(self) -> list[str]:
         lines: list[str] = []
         for rc in range(9):
             line: list[str] = []

@@ -5,10 +5,7 @@ import pytest
 from sudoku import puzzle
 from sudoku.puzzle import Orientation
 
-
-def build_puzzle(partial: str) -> str:
-    remaining = 81 - len(partial)
-    return partial + "." * remaining
+from .helpers import build_puzzle
 
 
 class TestGrid:
