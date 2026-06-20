@@ -1,3 +1,5 @@
+import pytest
+
 from sudoku import puzzle
 from sudoku.solver import Solver
 
@@ -48,3 +50,13 @@ class TestSolver:
         def test_already_solved_puzzle(self):
             already_solved = solved_puzzle()
             assert Solver(puzzle.Grid.construct(already_solved)).solve() == already_solved
+
+        @pytest.mark.xfail(reason="Solver not yet complete")
+        def test_almost_solved_puzzle(self):
+            already_solved = solved_puzzle()
+            almost_solved = already_solved[:-1] + "."
+            assert Solver(puzzle.Grid.construct(almost_solved)).solve() == already_solved
+
+        def test_unsolvable(self):
+            with pytest.raises(Solver.Unsolvable, match="....."):
+                Solver(puzzle.Grid.construct(build_puzzle(""))).solve()

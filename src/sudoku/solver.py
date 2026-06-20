@@ -25,6 +25,8 @@ class Solver:
     _solved_set: set[puzzle.Square] = attrs.field(init=False)
     _changed_set: set[puzzle.Square] = attrs.field(init=False)
 
+    class Unsolvable(Exception): ...
+
     def __attrs_post_init__(self):
         self._square_rows = {sq: row for row in self.grid.rows for sq in row.squares}
         self._square_cols = {sq: col for col in self.grid.columns for sq in col.squares}
@@ -38,10 +40,20 @@ class Solver:
 
     def solve(self) -> Solution:
         while not self.grid.solved():
-            self.reduce_options()
+            strategies = [
+                self.strategy_reduce_options(),
+            ]
+            if not any(strategies):
+                raise Solver.Unsolvable("".join("".join(line) for line in self.grid.lines()))
         return "".join("".join(line) for line in self.grid.lines())
 
-    def reduce_options(self) -> None:
+    def strategy_reduce_options(self) -> bool:
+        """
+        Given newly-solved squares, remove that squares value from all of its neighbours options.
+
+        Returns False if no changes were made, True otherwise.
+        """
+        changes = False
         while self._solved_set:
             solved = self._solved_set.pop()
             val = solved.value
@@ -49,6 +61,8 @@ class Solver:
                 if val in self._square_options[nb]:
                     self._square_options[nb].remove(val)
                     self._changed_set.add(nb)
+                    changes = True
+        return changes
 
     def _non_empty_squares(self) -> list[puzzle.Square]:
         return [sq for sq in self.grid.squares.values() if sq.value != puzzle.EMPTY]
