@@ -98,6 +98,8 @@ class Grid:
         """
         if (sz := len(puzzle)) != 81:
             raise InvalidGrid(f"Size {sz} != 81")
+        # Some common formats use 0 for empty, let's just handle it.
+        puzzle = puzzle.replace("0", ".")
         row = col = 0
         squares: dict[Coord, Square] = {}
         for sq in puzzle:
