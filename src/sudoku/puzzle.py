@@ -25,9 +25,15 @@ class Orientation(enum.StrEnum):
 
 @attrs.define(frozen=False)
 class Unit:
+    """
+    Groups a column, row, or box.
+    """
+
     pos: int
     orientation: Orientation
     squares: list[Square]
+
+    _valid: bool = False
 
     def __hash__(self) -> int:
         return hash(f"{self.pos}-{self.orientation.value}")
@@ -39,6 +45,8 @@ class Unit:
         return sum(sq.value == EMPTY for sq in self.squares)
 
     def valid(self) -> bool:
+        if self._valid:
+            return True
         dupes = [
             item
             for item, count in Counter(
@@ -50,7 +58,10 @@ class Unit:
             raise Unit.Invalid(
                 f"Duplicate '{dupes[0]}' found in {self.orientation.value}:{self.pos}"
             )
-        return self.complete()
+        complete = self.complete()
+        if complete:
+            self._valid = True
+        return complete
 
     class Invalid(Exception): ...
 
