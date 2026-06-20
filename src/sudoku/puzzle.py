@@ -74,6 +74,10 @@ class Square:
     def __hash__(self) -> int:
         return hash(self.location)
 
+    @property
+    def is_empty(self) -> bool:
+        return self.value == EMPTY
+
 
 @attrs.define(frozen=True)
 class Grid:
@@ -105,6 +109,9 @@ class Grid:
                 row += 1
                 col = 0
         return Grid(squares=squares)
+
+    def solved(self) -> bool:
+        return all(unit.valid() for unit in itertools.chain(self.rows, self.columns, self.boxes))
 
     def _unit_rows(self) -> list[Unit]:
         return [

@@ -1,7 +1,7 @@
 from sudoku import puzzle
 from sudoku.solver import Solver
 
-from .helpers import build_puzzle
+from .helpers import build_puzzle, solved_puzzle
 
 
 class TestSolver:
@@ -43,3 +43,8 @@ class TestSolver:
 
         forth = grid.squares[0, 3]
         assert solver._square_options[forth] == puzzle.ALL_NUMS
+
+    class TestSolve:
+        def test_already_solved_puzzle(self):
+            already_solved = solved_puzzle()
+            assert Solver(puzzle.Grid.construct(already_solved)).solve() == already_solved

@@ -5,7 +5,7 @@ import pytest
 from sudoku import puzzle
 from sudoku.puzzle import Orientation
 
-from .helpers import build_puzzle
+from .helpers import build_puzzle, solved_puzzle
 
 
 class TestGrid:
@@ -117,6 +117,15 @@ class TestGrid:
                 |987|564|321|
                 +---+---+---+"""
             )
+
+    class TestSolved:
+        def test_is_solved(self):
+            grid = puzzle.Grid.construct(solved_puzzle())
+            assert grid.solved()
+
+        def test_not_solved(self):
+            grid = puzzle.Grid.construct(build_puzzle("123...789"))
+            assert not grid.solved()
 
 
 class TestUnit:
