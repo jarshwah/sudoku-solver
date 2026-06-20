@@ -70,7 +70,6 @@ class Unit:
 class Square:
     location: Coord
     value: str
-    options: str
 
     def __hash__(self) -> int:
         return hash(self.location)
@@ -100,7 +99,7 @@ class Grid:
         for sq in puzzle:
             if sq not in ALLOWED:
                 raise InvalidGrid(f"{sq} not in {ALLOWED}")
-            squares[(row, col)] = Square(location=(row, col), value=sq, options=NUMBERS)
+            squares[(row, col)] = Square(location=(row, col), value=sq)
             col += 1
             if col >= 9:
                 row += 1
