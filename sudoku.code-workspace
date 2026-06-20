@@ -22,7 +22,8 @@
         "python.analysis.typeCheckingMode": "strict",
         "python.analysis.useLibraryCodeForTypes": true,
         "ty.importStrategy": "fromEnvironment",
-        "python.languageServer": "None",
+        "ty.completions.autoImport": true,
+        "python.languageServer": "Pylance",
 
         "[python]": {
             "editor.formatOnPaste": false,
