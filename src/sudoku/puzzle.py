@@ -1,3 +1,7 @@
+import enum
+import itertools
+from collections import Counter, defaultdict
+
 import attrs
 
 
@@ -9,11 +13,51 @@ type Coord = tuple[int, int]
 EMPTY: str = "."
 NUMBERS: str = "123456789"
 ALLOWED: str = NUMBERS + EMPTY
+ALL_NUMS: set[str] = {num for num in NUMBERS}
+
+
+@enum.unique
+class Orientation(enum.StrEnum):
+    ROW = "ROW"
+    COL = "COL"
+    BOX = "BOX"
+
+
+@attrs.define(frozen=False)
+class Unit:
+    pos: int
+    orientation: Orientation
+    squares: list[Square]
+
+    def __hash__(self) -> int:
+        return hash(f"{self.pos}-{self.orientation.value}")
+
+    def complete(self) -> bool:
+        return {sq.value for sq in self.squares} == ALL_NUMS
+
+    def remaining(self) -> int:
+        return sum(sq.value == EMPTY for sq in self.squares)
+
+    def valid(self) -> bool:
+        dupes = [
+            item
+            for item, count in Counter(
+                [sq.value for sq in self.squares if sq.value != EMPTY]
+            ).items()
+            if count > 1
+        ]
+        if dupes:
+            raise Unit.Invalid(
+                f"Duplicate '{dupes[0]}' found in {self.orientation.value}:{self.pos}"
+            )
+        return self.complete()
+
+    class Invalid(Exception): ...
 
 
 @attrs.define(frozen=False)
 class Square:
-    location: str
+    location: Coord
     value: str
     options: str
 
@@ -21,9 +65,13 @@ class Square:
         return hash(self.location)
 
 
-@attrs.define
+@attrs.define(frozen=True)
 class Grid:
     squares: dict[Coord, Square] = attrs.Factory(dict[Coord, Square])
+
+    rows: list[Unit] = attrs.field(init=False)
+    columns: list[Unit] = attrs.field(init=False)
+    boxes: list[Unit] = attrs.field(init=False)
 
     @classmethod
     def construct(cls, puzzle: str) -> Grid:
@@ -41,14 +89,39 @@ class Grid:
         for sq in puzzle:
             if sq not in ALLOWED:
                 raise InvalidGrid(f"{sq} not in {ALLOWED}")
-            squares[(row, col)] = Square(
-                location=f"R{row}C{col}", value=sq, options=NUMBERS
-            )
+            squares[(row, col)] = Square(location=(row, col), value=sq, options=NUMBERS)
             col += 1
             if col >= 9:
                 row += 1
                 col = 0
         return Grid(squares=squares)
+
+    def _unit_rows(self) -> list[Unit]:
+        return [
+            Unit(rc, Orientation.ROW, [self.squares[rc, cc] for cc in range(9)])
+            for rc in range(9)
+        ]
+
+    def _unit_cols(self) -> list[Unit]:
+        return [
+            Unit(cc, Orientation.COL, [self.squares[rc, cc] for rc in range(9)])
+            for cc in range(9)
+        ]
+
+    def _unit_boxes(self) -> list[Unit]:
+        # group the squares to "box-coordinates" in a 3x3 matrix
+        mapping: dict[Coord, list[Square]] = defaultdict(list)
+        for rc in range(9):
+            for cc in range(9):
+                mapping[(rc // 3, cc // 3)].append(self.squares[rc, cc])
+        # then construct the units from the mapping
+        combos = zip(itertools.product(range(3), range(3)), itertools.count())
+        return [Unit(num, Orientation.BOX, mapping[rc, cc]) for (rc, cc), num in combos]
+
+    def __attrs_post_init__(self):
+        object.__setattr__(self, "rows", self._unit_rows())
+        object.__setattr__(self, "columns", self._unit_cols())
+        object.__setattr__(self, "boxes", self._unit_boxes())
 
     def render(self) -> str:
         """

@@ -3,6 +3,12 @@ import textwrap
 import pytest
 
 from sudoku import puzzle
+from sudoku.puzzle import Orientation
+
+
+def build_puzzle(partial: str) -> str:
+    remaining = 81 - len(partial)
+    return partial + "." * remaining
 
 
 class TestGrid:
@@ -30,6 +36,51 @@ class TestGrid:
         def test_construct_all_empty(self):
             grid = puzzle.Grid.construct("." * 81)
             assert len(grid) == 81
+
+    class TestUnits:
+        def test_unit_rows(self):
+            grid = puzzle.Grid.construct(build_puzzle("123456789.9.......8"))
+            row0 = grid.rows[0]
+            assert row0.orientation == Orientation.ROW
+            assert row0.pos == 0
+            assert "".join([s.value for s in row0.squares]) == "123456789"
+            row1 = grid.rows[1]
+            assert row1.orientation == Orientation.ROW
+            assert row1.pos == 1
+            assert "".join([s.value for s in row1.squares]) == ".9......."
+            row2 = grid.rows[2]
+            assert row2.orientation == Orientation.ROW
+            assert row2.pos == 2
+            assert "".join([s.value for s in row2.squares]) == "8........"
+
+        def test_unit_cols(self):
+            grid = puzzle.Grid.construct(build_puzzle("12.......34.......78......."))
+            col0 = grid.columns[0]
+            assert col0.orientation == Orientation.COL
+            assert col0.pos == 0
+            assert "".join([s.value for s in col0.squares]) == "137......"
+            col1 = grid.columns[1]
+            assert col1.orientation == Orientation.COL
+            assert col1.pos == 1
+            assert "".join([s.value for s in col1.squares]) == "248......"
+            col2 = grid.columns[2]
+            assert col2.orientation == Orientation.COL
+            assert col2.pos == 2
+            assert "".join([s.value for s in col2.squares]) == "........."
+
+        def test_unit_boxes(self):
+            layout = build_puzzle("123" + ("." * 6) + "456")
+            # Put 987 in the bottom right corner
+            layout = layout[:-3] + "987"
+            grid = puzzle.Grid.construct(layout)
+            box0 = grid.boxes[0]
+            assert box0.orientation == Orientation.BOX
+            assert box0.pos == 0
+            assert "".join([s.value for s in box0.squares]) == "123456..."
+            box8 = grid.boxes[8]
+            assert box8.orientation == Orientation.BOX
+            assert box8.pos == 8
+            assert "".join([s.value for s in box8.squares]) == "......987"
 
     class TestRendering:
         def test_render_empty(self):
@@ -69,3 +120,96 @@ class TestGrid:
                 |987|564|321|
                 +---+---+---+"""
             )
+
+
+class TestUnit:
+    def test_complete(self):
+        unit = puzzle.Unit(
+            pos=0,
+            orientation=puzzle.Orientation.ROW,
+            squares=[
+                puzzle.Square((0, 0), value="1", options=""),
+                puzzle.Square((0, 1), value="2", options=""),
+                puzzle.Square((0, 2), value="3", options=""),
+                puzzle.Square((0, 3), value="4", options=""),
+                puzzle.Square((0, 4), value="5", options=""),
+                puzzle.Square((0, 5), value="6", options=""),
+                puzzle.Square((0, 6), value="7", options=""),
+                puzzle.Square((0, 7), value="8", options=""),
+                puzzle.Square((0, 8), value="9", options=""),
+            ],
+        )
+        assert unit.complete()
+
+    def test_incomplete(self):
+        unit = puzzle.Unit(
+            pos=0,
+            orientation=puzzle.Orientation.ROW,
+            squares=[
+                puzzle.Square((0, 0), value="1", options=""),
+                puzzle.Square((0, 1), value="2", options=""),
+                puzzle.Square((0, 2), value="3", options=""),
+                puzzle.Square((0, 3), value="4", options=""),
+                puzzle.Square((0, 4), value="5", options=""),
+                puzzle.Square((0, 5), value="6", options=""),
+                puzzle.Square((0, 6), value="7", options=""),
+                puzzle.Square((0, 7), value="8", options=""),
+                puzzle.Square((0, 8), value=".", options="9"),
+            ],
+        )
+        assert not unit.complete()
+
+    def test_invalid(self):
+        unit = puzzle.Unit(
+            pos=0,
+            orientation=puzzle.Orientation.ROW,
+            squares=[
+                puzzle.Square((0, 0), value="1", options=""),
+                puzzle.Square((0, 1), value="2", options=""),
+                puzzle.Square((0, 2), value="3", options=""),
+                puzzle.Square((0, 3), value="4", options=""),
+                puzzle.Square((0, 4), value="1", options=""),
+                puzzle.Square((0, 5), value="6", options=""),
+                puzzle.Square((0, 6), value="7", options=""),
+                puzzle.Square((0, 7), value="8", options=""),
+                puzzle.Square((0, 8), value=".", options="9"),
+            ],
+        )
+        with pytest.raises(puzzle.Unit.Invalid, match="Duplicate '1' found in ROW:0"):
+            unit.valid()
+
+    def test_valid(self):
+        unit = puzzle.Unit(
+            pos=0,
+            orientation=puzzle.Orientation.ROW,
+            squares=[
+                puzzle.Square((0, 0), value="1", options=""),
+                puzzle.Square((0, 1), value="2", options=""),
+                puzzle.Square((0, 2), value="3", options=""),
+                puzzle.Square((0, 3), value="4", options=""),
+                puzzle.Square((0, 4), value="5", options=""),
+                puzzle.Square((0, 5), value="6", options=""),
+                puzzle.Square((0, 6), value="7", options=""),
+                puzzle.Square((0, 7), value="8", options=""),
+                puzzle.Square((0, 8), value="9", options=""),
+            ],
+        )
+        assert unit.valid()
+
+    def test_remaining(self):
+        unit = puzzle.Unit(
+            pos=0,
+            orientation=puzzle.Orientation.ROW,
+            squares=[
+                puzzle.Square((0, 0), value="1", options=""),
+                puzzle.Square((0, 1), value=".", options=""),
+                puzzle.Square((0, 2), value=".", options=""),
+                puzzle.Square((0, 3), value=".", options=""),
+                puzzle.Square((0, 4), value="5", options=""),
+                puzzle.Square((0, 5), value="6", options=""),
+                puzzle.Square((0, 6), value="7", options=""),
+                puzzle.Square((0, 7), value="8", options=""),
+                puzzle.Square((0, 8), value="9", options=""),
+            ],
+        )
+        assert unit.remaining() == 3
