@@ -1,0 +1,39 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "never"
+        },
+        "git.inputValidationSubjectLength": 70,
+        "python.terminal.activateEnvInCurrentTerminal": true,
+        "python.terminal.activateEnvironment": true,
+        "python.analysis.autoFormatStrings": true,
+        "python.analysis.autoImportCompletions": true,
+        "python.analysis.autoSearchPaths": true,
+        "python.analysis.completeFunctionParens": false,
+        "python.analysis.enablePytestSupport": true,
+        "python.analysis.gotoDefinitionInStringLiteral": true,
+        "python.analysis.logLevel": "Warning",
+        "python.analysis.persistAllIndices": true,
+        "python.analysis.typeCheckingMode": "strict",
+        "python.analysis.useLibraryCodeForTypes": true,
+        "ty.importStrategy": "fromEnvironment",
+        "python.languageServer": "None",
+
+        "[python]": {
+            "editor.formatOnPaste": false,
+            "editor.formatOnSaveMode": "file",
+            "editor.formatOnSave": true,
+            "editor.codeActionsOnSave": {
+                "source.fixAll": "never",
+                "source.fixAll.ruff": "explicit",
+                "source.organizeImports": "explicit"
+            },
+            "editor.defaultFormatter": "charliermarsh.ruff"
+        },
+    }
+}
