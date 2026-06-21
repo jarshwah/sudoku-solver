@@ -1,5 +1,5 @@
 import itertools
-from collections import Counter
+from collections import Counter, defaultdict
 from typing import Iterable, Sequence
 
 import attrs
@@ -7,6 +7,13 @@ import attrs
 from sudoku import puzzle
 
 type Solution = str
+
+
+@attrs.define(frozen=True)
+class SolverDiagnostic:
+    turn: int
+    label: str
+    squares_affected: int
 
 
 @attrs.define
@@ -27,6 +34,9 @@ class Solver:
     _solved_set: set[puzzle.Square] = attrs.field(init=False)
     _changed_set: set[puzzle.Square] = attrs.field(init=False)
 
+    _turn: int = 0
+    _diagnostics: list[SolverDiagnostic] = attrs.field(init=False)
+
     class Unsolvable(Exception): ...
 
     def __attrs_post_init__(self):
@@ -37,13 +47,18 @@ class Solver:
             sq: set(puzzle.ALL_NUMS) if sq.is_empty else set() for sq in self.grid.squares.values()
         }
         self._changed_set = set()
+        self._diagnostics = []
 
     def solve(self) -> Solution:
-        for sq in set(self._non_empty_squares()):
+
+        initial_squares = set(self._non_empty_squares())
+        for sq in initial_squares:
             # We'll "set" the value again, but no worries.
             self._solve_square(sq, sq.value)
+        self._record_diagnostic("InitialSolved", len(initial_squares))
 
         while not self.grid.solved():
+            self._turn += 1
             strategies = [
                 self.strategy_naked_single(),
                 self.strategy_hidden_single(),
@@ -58,6 +73,7 @@ class Solver:
 
         Add any changing neighbours to the change queue, so we inspect them for naked singles.
         """
+
         square.value = value
         self._square_options[square].clear()
         for nb in self._neighbours(square):
@@ -71,19 +87,21 @@ class Solver:
 
         Returns False if no squares could be solved, True otherwise.
         """
-        changes = False
+        changes = 0
         for changed in self._changed_set:
             if len(self._square_options[changed]) == 1:
                 self._solve_square(changed, self._square_options[changed].pop())
-                changes = True
-        return changes
+                changes += 1
+        if changes:
+            self._record_diagnostic("NakedSingle", changes)
+        return bool(changes)
 
     def strategy_hidden_single(self) -> bool:
         """
         Inspect the possibles of each cell, if a possible is noted only once in the Unit it
         can't go anywhere else, so that's the value.
         """
-        changes: set[puzzle.Square] = set()
+        changes = 0
         for unit in itertools.chain(self.grid.columns, self.grid.rows, self.grid.boxes):
             # Use a counter to find count of each possible in the group, if the count is 1, then
             # we know the possible can't go anywhere else, even if the square had multiple possibilities.
@@ -98,9 +116,11 @@ class Solver:
             for sq in unit.squares:
                 if match := singles & self._square_options[sq]:
                     # found a hidden single!
-                    changes.add(sq)
+                    changes += 1
                     # We can't have multiple singles matching a single square, so assume it's one and pop the match.
                     self._solve_square(sq, match.pop())
+        if changes:
+            self._record_diagnostic("HiddenSingle", changes)
         return bool(changes)
 
     def _non_empty_squares(self) -> list[puzzle.Square]:
@@ -114,3 +134,20 @@ class Solver:
             for sq in unit.squares:
                 if sq != square:
                     yield sq
+
+    def report_diagnostics(self) -> str:
+        count_solves_per_strategy: defaultdict[str, int] = defaultdict(int)
+        for diag in self._diagnostics:
+            count_solves_per_strategy[diag.label] += diag.squares_affected
+        num_turns = self._diagnostics[-1].turn
+        report = ["Diagnostics", "==========="]
+        report.extend(
+            [f"Strategy: {label} -> {count}" for label, count in count_solves_per_strategy.items()]
+        )
+        report.extend(["", "Statistics", "==========", f"Turns: {num_turns}"])
+        return "\n".join(report)
+
+    def _record_diagnostic(self, label: str, affected: int) -> None:
+        self._diagnostics.append(
+            SolverDiagnostic(turn=self._turn, label=label, squares_affected=affected)
+        )

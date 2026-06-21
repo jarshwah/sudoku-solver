@@ -23,3 +23,6 @@ def main() -> None:
         print("Solved!")
 
     print(grid.render())
+
+    print("")
+    print(solve.report_diagnostics())
