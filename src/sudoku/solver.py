@@ -76,6 +76,7 @@ class Solver:
 
         square.value = value
         self._square_options[square].clear()
+        # Remove value from any neighbouring (row, column, or box) possibilities
         for nb in self._neighbours(square):
             if value in self._square_options[nb]:
                 self._square_options[nb].remove(value)
