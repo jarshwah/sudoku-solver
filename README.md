@@ -14,7 +14,7 @@ I'm interested in what real strategies exist that people would use in practice.
 
 There are two!
 
-1. I don't get a change to write that much code anymore being in a leadership position, so I was keen to slap something together that wasn't too dissimilar to advent of code (which I really enjoy). Sudoku solver sits in the realm of being fairly simple, but still requires some thinking and learning about different strategies.
+1. I don't get a chance to write that much code anymore being in a leadership position, so I was keen to slap something together that wasn't too dissimilar to advent of code (which I really enjoy). Sudoku solver sits in the realm of being fairly simple, but still requires some thinking and learning about different strategies.
 
 2. When I do get to write code it's often driven by AI. I really just wanted to write some code for the sake of writing code. I disabled all AI and AI-driven autocomplete for this project so I could actually *think* and make my own mistakes. Feels good man.
 
